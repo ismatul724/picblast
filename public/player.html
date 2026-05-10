@@ -104,6 +104,9 @@
 </div>
 <script>
 const socket=io({ transports: ['websocket'] });
+socket.onAny((eventName, ...args) => {
+  console.log('📡 Event diterima:', eventName, args);
+});
 let myId=null,myFreezeCharges=0,lastPlayers=[];
 let questionActive=false,timerInterval=null,startedAt=null,durationMs=20000;
 let currentCode='';
