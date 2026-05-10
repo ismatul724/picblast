@@ -20,10 +20,10 @@
     </div>
   </div>
 <script>
-const socket = io(); let roomCode=''; let themes=[]; let selectedThemes=[];
+const socket = io({ transports: ['websocket'] }); let roomCode=''; let themes=[]; let selectedThemes=[];
 function renderThemes(){document.getElementById('theme-list').innerHTML=themes.map(t=>`<label class="theme"><div>${t.icon} ${t.name}</div><input type="checkbox" ${selectedThemes.includes(t.id)?'checked':''} onchange="toggleTheme('${t.id}',this.checked)" /></label>`).join('')}
 function toggleTheme(id,checked){if(checked&&!selectedThemes.includes(id))selectedThemes.push(id); if(!checked)selectedThemes=selectedThemes.filter(x=>x!==id); socket.emit('themes:update',{code:roomCode,themeIds:selectedThemes})}
-function renderPlayers(players){document.getElementById('players-list').innerHTML=players.map(p=>`<div class="player"><div>${p.avatar} ${p.name}</div><div class="chip">${p.connected?'online':'offline'} · ${p.score} poin</div></div>`).join('')}
+function renderPlayers(players){document.getElementById('players-list').innerHTML=players.map(p=>`<div class="player"><div>${p.avatar} ${p.name}</div><div class="chip">${p.connected?'online':'offline'} ï¿½ ${p.score} poin</div></div>`).join('')}
 socket.on('room:created',({code,themes:availableThemes})=>{roomCode=code;themes=availableThemes;selectedThemes=availableThemes.map(t=>t.id);document.getElementById('room-chip').textContent='Room '+code;document.getElementById('create-status').textContent='Room berhasil dibuat.';document.getElementById('create-panel').classList.add('hidden');document.getElementById('control-panel').classList.remove('hidden');renderThemes()});
 socket.on('room:state',({code,players,selectedThemes:activeThemes,status})=>{roomCode=code;selectedThemes=activeThemes;renderPlayers(players);if(themes.length)renderThemes();document.getElementById('host-status').textContent=status==='lobby'?'Menunggu pemain...':'Game sedang berjalan.'});
 socket.on('error:message',({message})=>{document.getElementById('create-status').textContent=message;document.getElementById('host-status').textContent=message});

@@ -103,7 +103,7 @@
 
 </div>
 <script>
-const socket=io();
+const socket=io({ transports: ['websocket'] });
 let myId=null,myFreezeCharges=0,lastPlayers=[];
 let questionActive=false,timerInterval=null,startedAt=null,durationMs=20000;
 let currentCode='';
