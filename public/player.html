@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>PicBlast Player</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    :root{--bg:#0a0b11;--line:rgba(255,255,255,.08);--text:#eef2ff;--muted:#98a2c3;--cyan:#67e8f9;--pink:#f472b6;--green:#4ade80;--yellow:#facc15}
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;background:radial-gradient(circle at top,#171b2f 0%,#0a0b11 50%);color:var(--text);min-height:100vh;padding:20px;display:grid;place-items:start center}
+    .wrap{width:100%;max-width:480px} h1,h2,h3,p{margin:0}
+    .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:24px;padding:22px;margin-bottom:14px}
+    .muted{color:var(--muted);font-size:14px;line-height:1.6}
+    input{width:100%;padding:14px 16px;border-radius:16px;border:1px solid var(--line);background:#0e1220;color:var(--text);font-size:16px;margin-top:10px;outline:none}
+    input:focus{border-color:var(--cyan)}
+    button{width:100%;border:none;border-radius:16px;padding:14px;font-weight:800;font-size:15px;cursor:pointer;margin-top:10px}
+    .primary{background:linear-gradient(135deg,var(--cyan),#22d3ee);color:#07111a}
+    .hidden{display:none!important}
+    .status{margin-top:10px;font-size:14px;color:var(--muted);min-height:18px}
+    .player-row{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:14px;background:#0e1220;border:1px solid var(--line);margin-top:8px}
+    .chip{padding:5px 12px;border-radius:999px;background:#0e1220;border:1px solid var(--line);font-size:12px;color:var(--muted)}
+    .round-badge{display:inline-block;padding:5px 14px;border-radius:999px;background:rgba(103,232,249,.1);border:1px solid rgba(103,232,249,.25);color:var(--cyan);font-size:13px;font-weight:700;margin-bottom:10px}
+    .img-wrap{position:relative;width:100%;aspect-ratio:1;border-radius:20px;overflow:hidden;background:#0e1220;border:1px solid var(--line)}
+    .img-wrap img{width:100%;height:100%;object-fit:cover;display:block;transition:filter .8s ease}
+    .clue-box{padding:13px 16px;border-radius:16px;background:#0e1220;border:1px solid var(--line);font-size:14px;color:var(--muted);margin-top:12px;line-height:1.6}
+    .answer-row{display:flex;gap:10px;margin-top:12px}
+    .answer-row input{margin:0;flex:1}
+    .answer-row button{width:auto;padding:14px 20px;margin:0;border-radius:16px}
+    .feedback{margin-top:10px;padding:12px 16px;border-radius:14px;font-weight:700;font-size:15px;text-align:center}
+    .feedback.ok{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.3)}
+    .feedback.fail{background:rgba(251,113,133,.12);color:var(--pink);border:1px solid rgba(251,113,133,.3)}
+    .feedback.info{background:rgba(250,204,21,.08);color:var(--yellow);border:1px solid rgba(250,204,21,.2)}
+    .lb-row{display:flex;justify-content:space-between;padding:8px 12px;border-radius:12px;background:#0e1220;border:1px solid var(--line);margin-top:6px;font-size:14px}
+    .freeze-btn{background:linear-gradient(135deg,#60a5fa,#3b82f6);color:#fff;border:none;border-radius:14px;padding:10px 16px;font-weight:700;font-size:13px;cursor:pointer;margin-top:8px;width:100%}
+    .timer-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.08);margin-bottom:12px;overflow:hidden}
+    .timer-fill{height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));transition:width .1s linear;border-radius:999px}
+    .podium-col{display:flex;flex-direction:column;align-items:center;flex:1;max-width:140px}
+    .podium-block{width:100%;display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:14px 14px 0 0}
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- JOIN -->
+  <div id="join-screen">
+    <div class="card">
+      <h1 style="font-size:36px;font-weight:900;background:linear-gradient(135deg,#67e8f9,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">PicBlast</h1>
+      <p class="muted" style="margin-top:8px">Masukkan nama dan kode room dari host.</p>
+      <input id="player-name" placeholder="Nama kamu" maxlength="18"/>
+      <input id="room-code" placeholder="Kode room (5 huruf)" maxlength="5" style="text-transform:uppercase"/>
+      <button class="primary" id="join-btn">Gabung Room</button>
+      <div class="status" id="join-status"></div>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
+  <div id="lobby-screen" class="hidden">
+    <div class="card">
+      <div class="round-badge" id="lobby-code"></div>
+      <h2 style="font-size:20px;margin-top:8px">Menunggu host memulai...</h2>
+      <p class="muted" style="margin-top:6px">Pemain yang sudah join:</p>
+      <div id="lobby-players"></div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div id="game-screen" class="hidden">
+    <div class="card" style="padding:16px">
+      <div class="round-badge" id="round-badge"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span id="question-counter" class="muted" style="font-size:13px"></span>
+        <span id="timer-display" style="font-weight:900;color:var(--cyan);font-size:18px"></span>
+      </div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill" style="width:100%"></div></div>
+      <div class="img-wrap">
+        <img id="game-img" src="" alt="Tebak gambar ini" style="filter:blur(30px) brightness(0.5)"/>
+      </div>
+      <div class="clue-box" id="clue-box">💡 Memuat clue...</div>
+      <div id="freeze-area"></div>
+      <div class="answer-row">
+        <input id="answer-input" placeholder="Ketik jawabanmu..." autocomplete="off"/>
+        <button class="primary" id="submit-btn" style="width:auto;margin:0;padding:14px 20px;border-radius:16px">Kirim</button>
+      </div>
+      <div id="feedback-box"></div>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px;margin-bottom:6px">🏆 Leaderboard Live</h3>
+      <div id="leaderboard"></div>
+    </div>
+  </div>
+
+  <!-- END -->
+  <div id="end-screen" class="hidden">
+    <div class="card" style="text-align:center;padding:28px">
+      <div style="font-size:40px;margin-bottom:4px">🎮</div>
+      <h2 style="font-size:26px;font-weight:900;background:linear-gradient(135deg,#67e8f9,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Game Selesai!</h2>
+      <p class="muted" style="margin-top:4px;margin-bottom:20px">Hasil akhir pertandingan</p>
+      <div id="podium-wrap" style="display:flex;align-items:flex-end;justify-content:center;gap:10px;margin-bottom:24px"></div>
+      <div id="other-ranks"></div>
+      <button class="primary" style="margin-top:20px" onclick="location.reload()">🔄 Main Lagi</button>
+    </div>
+  </div>
+
+</div>
+<script>
+const socket=io();
+let myId=null,myFreezeCharges=0,lastPlayers=[];
+let questionActive=false,timerInterval=null,startedAt=null,durationMs=20000;
+let currentCode='';
+
+const $=id=>document.getElementById(id);
+function show(id){['join-screen','lobby-screen','game-screen','end-screen'].forEach(s=>$(s).classList.add('hidden'));$(id).classList.remove('hidden')}
+
+// JOIN
+$('join-btn').onclick=()=>{
+  const name=$('player-name').value.trim();
+  const code=$('room-code').value.trim().toUpperCase();
+  if(!name){$('join-status').textContent='Isi nama dulu.';return}
+  if(code.length<3){$('join-status').textContent='Isi kode room dulu.';return}
+  socket.emit('room:join',{code,playerName:name});
+  $('join-status').textContent='Menghubungkan...';
+};
+$('room-code').addEventListener('keydown',e=>{if(e.key==='Enter')$('join-btn').click()});
+
+socket.on('room:joined',({code,player})=>{
+  myId=player.id;currentCode=code;
+  $('lobby-code').textContent='Room '+code;
+  show('lobby-screen');
+});
+
+socket.on('room:state',({players})=>{
+  lastPlayers=players;
+  const me=players.find(p=>p.id===myId);
+  if(me)myFreezeCharges=me.freezeCharges||0;
+  $('lobby-players').innerHTML=players.map(p=>`<div class="player-row"><span>${p.avatar||'◉'} ${p.name}</span><span class="chip">${p.connected?'online':'offline'}</span></div>`).join('');
+});
+
+socket.on('error:message',({message})=>{$('join-status').textContent=message});
+
+// GAME
+socket.on('question:start',data=>{
+  show('game-screen');
+  questionActive=true;startedAt=Date.now();durationMs=data.durationMs||20000;
+  $('round-badge').textContent=`${data.roundIcon} ${data.roundName} · Babak ${data.roundIndex+1}/${data.totalRounds}`;
+  $('question-counter').textContent=`Soal ${data.questionIndex+1}/${data.totalQuestions}`;
+  $('clue-box').textContent='💡 '+data.clue;
+  $('answer-input').value='';
+  $('answer-input').disabled=false;
+  $('submit-btn').disabled=false;
+  $('feedback-box').innerHTML='';
+  const img=$('game-img');
+  img.style.filter='blur(30px) brightness(0.5)';
+  img.src='';
+  setTimeout(()=>{img.src=data.imageUrl||'';},50);
+  renderFreezeArea(data.frozenPlayerId);
+  renderLeaderboard(data.leaderboard);
+  clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    const elapsed=Date.now()-startedAt;
+    const remaining=Math.max(0,durationMs-elapsed)/1000;
+    const pct=(remaining/(durationMs/1000))*100;
+    $('timer-display').textContent=remaining.toFixed(1)+'s';
+    $('timer-fill').style.width=pct+'%';
+    if(remaining<=0)clearInterval(timerInterval);
+  },100);
+});
+
+socket.on('question:reveal',({level})=>{
+  const blurPx=Math.max(0,30-(level*2.5));
+  const brightness=Math.min(1,0.5+(level*0.05));
+  $('game-img').style.filter=`blur(${blurPx}px) brightness(${brightness})`;
+  if(level===4)$('clue-box').textContent+=' · Perhatikan bentuknya...';
+  if(level===8)$('clue-box').textContent+=' · Hampir terlihat jelas!';
+});
+
+socket.on('question:end',({answer,winner,leaderboard})=>{
+  questionActive=false;
+  clearInterval(timerInterval);
+  $('game-img').style.filter='blur(0px) brightness(1)';
+  $('answer-input').disabled=true;
+  $('submit-btn').disabled=true;
+  $('timer-display').textContent='';
+  $('timer-fill').style.width='0%';
+  const msg=winner?(winner.id===myId?'🎉 Kamu yang tercepat!':`✅ Dijawab oleh ${winner.name}`):'⏱ Waktu habis!';
+  $('feedback-box').innerHTML=`<div class="feedback info">${msg} · Jawaban: <strong>${answer}</strong></div>`;
+  renderLeaderboard(leaderboard);
+});
+
+socket.on('leaderboard:update',({leaderboard})=>renderLeaderboard(leaderboard));
+
+socket.on('freeze:armed',({byPlayerId,targetPlayerId})=>{
+  const by=lastPlayers.find(p=>p.id===byPlayerId);
+  const target=lastPlayers.find(p=>p.id===targetPlayerId);
+  if(myId===targetPlayerId){
+    $('feedback-box').innerHTML=`<div class="feedback fail">❄️ Kamu terkena freeze dari ${by?.name||'seseorang'}! Tidak bisa menjawab soal ini.</div>`;
+    $('answer-input').disabled=true;
+    $('submit-btn').disabled=true;
+  } else {
+    $('feedback-box').innerHTML=`<div class="feedback info">❄️ ${by?.name||'Seseorang'} membekukan ${target?.name||'pemain'}!</div>`;
+  }
+});
+
+socket.on('round:end',({roundName,winner,leaderboard})=>{
+  renderLeaderboard(leaderboard);
+  $('feedback-box').innerHTML=`<div class="feedback info">🏁 Babak ${roundName} selesai! ${winner?`Pemenang babak: <strong>${winner.name}</strong>`:'Tidak ada pemenang babak ini.'}</div>`;
+  $('freeze-area').innerHTML='';
+  const me=leaderboard.find(p=>p.id===myId);
+  if(me)myFreezeCharges=me.freezeCharges||0;
+});
+
+socket.on('game:end',({leaderboard})=>{
+  show('end-screen');
+  clearInterval(timerInterval);
+
+  const medals=['🥇','🥈','🥉'];
+  const heights=['160px','120px','90px'];
+  const colors=['rgba(192,192,192,.15)','rgba(255,215,0,.2)','rgba(205,127,50,.15)'];
+  const borderColors=['rgba(192,192,192,.4)','rgba(255,215,0,.6)','rgba(205,127,50,.4)'];
+
+  const top3=leaderboard.slice(0,3);
+  const rest=leaderboard.slice(3);
+
+  // Urutan podium: 2nd kiri, 1st tengah, 3rd kanan
+  const podiumMap=top3.length===1?[0]:top3.length===2?[1,0]:[1,0,2];
+
+  const podiumWrap=$('podium-wrap');
+  podiumWrap.innerHTML='';
+  podiumMap.forEach(rankIdx=>{
+    const p=top3[rankIdx];
+    if(!p)return;
+    const isMe=p.id===myId;
+    const col=document.createElement('div');
+    col.className='podium-col';
+    col.innerHTML=`
+      <div style="font-size:30px;margin-bottom:4px">${medals[rankIdx]}</div>
+      <div style="font-weight:800;font-size:13px;margin-bottom:2px;color:${isMe?'#67e8f9':'#eef2ff'};max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}${isMe?' 👈':''}</div>
+      <div style="font-size:12px;color:#98a2c3;margin-bottom:8px">${p.score} poin</div>
+      <div class="podium-block" style="height:${heights[rankIdx]};background:${colors[rankIdx]};border:1px solid ${borderColors[rankIdx]}">${medals[rankIdx]}</div>
+    `;
+    podiumWrap.appendChild(col);
+  });
+
+  const otherRanks=$('other-ranks');
+  if(rest.length>0){
+    otherRanks.innerHTML=`<div style="font-size:13px;color:#98a2c3;margin-bottom:8px;text-align:left">Ranking lainnya:</div>`+
+      rest.map((p,i)=>`<div class="lb-row" style="${p.id===myId?'border-color:rgba(103,232,249,.4);background:rgba(103,232,249,.06)':''}"><span>#${i+4} ${p.name}${p.id===myId?' (kamu)':''}</span><span style="font-weight:800">${p.score} poin</span></div>`).join('');
+  } else {
+    otherRanks.innerHTML='';
+  }
+});
+
+$('submit-btn').onclick=submitAnswer;
+$('answer-input').addEventListener('keydown',e=>{if(e.key==='Enter')submitAnswer()});
+function submitAnswer(){
+  if(!questionActive)return;
+  const ans=$('answer-input').value.trim();
+  if(!ans)return;
+  socket.emit('answer:submit',{code:currentCode,answer:ans});
+  $('answer-input').value='';
+}
+
+socket.on('answer:feedback',({ok,message})=>{
+  $('feedback-box').innerHTML=`<div class="feedback ${ok?'ok':'fail'}">${message}</div>`;
+});
+
+function renderFreezeArea(frozenId){
+  if(myFreezeCharges<1){$('freeze-area').innerHTML='';return}
+  const targets=lastPlayers.filter(p=>p.id!==myId);
+  $('freeze-area').innerHTML=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">❄️ Freeze tersedia (${myFreezeCharges}x) — pilih target:</div>`+targets.map(p=>`<button class="freeze-btn" onclick="useFreeze('${p.id}')">Bekukan ${p.name}</button>`).join('');
+}
+
+function useFreeze(targetId){
+  socket.emit('freeze:use',{code:currentCode,targetPlayerId:targetId});
+  $('freeze-area').innerHTML='<div style="font-size:13px;color:var(--muted);margin-top:8px">❄️ Freeze sudah digunakan!</div>';
+  myFreezeCharges=0;
+}
+
+function renderLeaderboard(lb){
+  lastPlayers=lb;
+  const me=lb.find(p=>p.id===myId);
+  if(me)myFreezeCharges=me.freezeCharges||0;
+  $('leaderboard').innerHTML=lb.map((p,i)=>`<div class="lb-row" style="${p.id===myId?'border-color:rgba(103,232,249,.4);background:rgba(103,232,249,.06)':''}"><span>${['🥇','🥈','🥉'][i]||'#'+(i+1)} ${p.name}${p.id===myId?' (kamu)':''}</span><span style="font-weight:800">${p.score}</span></div>`).join('');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "picblast-multiplayer",
+  "version": "1.1.0",
+  "description": "Realtime multiplayer image guessing game with Socket.IO and SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node seed.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "express": "^4.19.2",
+    "socket.io": "^4.8.1"
+  }
+}
