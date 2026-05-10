@@ -107,6 +107,8 @@ const socket=io({ transports: ['websocket'] });
 let myId=null,myFreezeCharges=0,lastPlayers=[];
 let questionActive=false,timerInterval=null,startedAt=null,durationMs=20000;
 let currentCode='';
+socket.on('connect', () => { alert('✅ Socket terhubung! ID: ' + socket.id); });
+socket.on('connect_error', (err) => { alert('❌ Gagal konek: ' + err.message); });
 
 const $=id=>document.getElementById(id);
 function show(id){['join-screen','lobby-screen','game-screen','end-screen'].forEach(s=>$(s).classList.add('hidden'));$(id).classList.remove('hidden')}
