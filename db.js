@@ -54,57 +54,20 @@ function seedIfEmpty() {
   const insertTheme = db.prepare('INSERT INTO themes (id, name, icon) VALUES (?, ?, ?)');
   themes.forEach(t => insertTheme.run(...t));
 
-  const insertQ = db.prepare(`INSERT INTO questions (theme_id, answer, accepted, clues, image_url) VALUES (?, ?, ?, ?, ?)`);
-  const rows = [
-    ['hardware','CPU',
-      JSON.stringify(['cpu','processor','prosesor','central processing unit']),
-      JSON.stringify(['Komponen inti pemrosesan komputer','Terpasang langsung di motherboard','Kinerjanya diukur dalam GHz']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Intel_80486DX2_top.jpg/600px-Intel_80486DX2_top.jpg'],
-    ['hardware','RAM',
-      JSON.stringify(['ram','random access memory','memori ram']),
-      JSON.stringify(['Penyimpanan sementara saat komputer aktif','Berbentuk modul panjang dan tipis','Kapasitasnya diukur dalam GB']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/db/Swissbit_2GB_PC2-5300U-555.jpg/600px-Swissbit_2GB_PC2-5300U-555.jpg'],
-    ['hardware','Mouse',
-      JSON.stringify(['mouse','tetikus','maus']),
-      JSON.stringify(['Alat input untuk menggerakkan kursor','Punya tombol klik kiri dan kanan','Sering dipakai bersama keyboard']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Logitech_M100_refresh_mouse%2C_2019_%28dark%29.jpg/600px-Logitech_M100_refresh_mouse%2C_2019_%28dark%29.jpg'],
-    ['hardware','Keyboard',
-      JSON.stringify(['keyboard','papan ketik','kibor']),
-      JSON.stringify(['Alat input utama untuk mengetik','Memiliki banyak tombol huruf dan angka','Ada versi wired dan wireless']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/QWERTY_keyboard_from_2001.jpg/640px-QWERTY_keyboard_from_2001.jpg'],
-    ['hardware','Monitor',
-      JSON.stringify(['monitor','layar','display','screen']),
-      JSON.stringify(['Perangkat output untuk menampilkan gambar','Ukurannya diukur dalam inci','Ada jenis LCD dan LED']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Dell_P2415Q.jpg/600px-Dell_P2415Q.jpg'],
-    ['network','Router',
-      JSON.stringify(['router','ruter']),
-      JSON.stringify(['Mengarahkan lalu lintas data antar jaringan','Perangkat rumahan biasanya punya antena','Menghubungkan perangkat ke internet']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Cisco_small_business_router.jpg/600px-Cisco_small_business_router.jpg'],
-    ['network','Switch',
-      JSON.stringify(['switch','network switch','swit']),
-      JSON.stringify(['Menghubungkan banyak perangkat dalam satu jaringan lokal','Memiliki banyak port ethernet','Berbeda dengan hub, lebih cerdas']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/2550T-PWR-Front.jpg/640px-2550T-PWR-Front.jpg'],
-    ['network','Kabel UTP',
-      JSON.stringify(['utp','kabel utp','unshielded twisted pair','kabel lan','lan cable']),
-      JSON.stringify(['Kabel jaringan yang sering dipakai di kantor','Ujungnya menggunakan konektor RJ-45','Tersedia dalam beberapa kategori seperti Cat5 dan Cat6']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/UTP_cable.jpg/600px-UTP_cable.jpg'],
-    ['network','Firewall',
-      JSON.stringify(['firewall','fire wall','tembok api']),
-      JSON.stringify(['Sistem keamanan jaringan','Memfilter lalu lintas data masuk dan keluar','Bisa berupa perangkat keras atau lunak']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Firewall.png/600px-Firewall.png'],
-    ['programming','Python',
-      JSON.stringify(['python','paiton']),
-      JSON.stringify(['Bahasa pemrograman tingkat tinggi','Banyak dipakai untuk AI dan data science','Namanya terinspirasi dari acara komedi Inggris']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Python-logo-notext.svg/600px-Python-logo-notext.svg.png'],
-    ['programming','JavaScript',
-      JSON.stringify(['javascript','js','java script']),
-      JSON.stringify(['Bahasa pemrograman utama untuk web browser','Bisa berjalan di frontend maupun backend','Sering disingkat dua huruf saja']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Unofficial_JavaScript_logo_2.svg/600px-Unofficial_JavaScript_logo_2.svg.png'],
-    ['programming','Database',
-      JSON.stringify(['database','basis data','db','data base']),
-      JSON.stringify(['Sistem untuk menyimpan dan mengelola data','Diakses menggunakan bahasa query','Contohnya MySQL dan PostgreSQL']),
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/MySQLLogo.svg/600px-MySQLLogo.svg.png']
-  ];
+const rows = [
+  ['hardware','CPU', JSON.stringify(['cpu','processor','prosesor','central processing unit']), JSON.stringify(['Komponen inti pemrosesan komputer','Terpasang langsung di motherboard','Kinerjanya diukur dalam GHz']), '/images/cpu.jpg'],
+  ['hardware','RAM', JSON.stringify(['ram','random access memory','memori ram']), JSON.stringify(['Penyimpanan sementara saat komputer aktif','Berbentuk modul panjang dan tipis','Kapasitasnya diukur dalam GB']), '/images/ram.jpg'],
+  ['hardware','Mouse', JSON.stringify(['mouse','tetikus','maus']), JSON.stringify(['Alat input untuk menggerakkan kursor','Punya tombol klik kiri dan kanan','Sering dipakai bersama keyboard']), '/images/mouse.jpg'],
+  ['hardware','Keyboard', JSON.stringify(['keyboard','papan ketik','kibor']), JSON.stringify(['Alat input utama untuk mengetik','Memiliki banyak tombol huruf dan angka','Ada versi wired dan wireless']), '/images/keyboard.jpg'],
+  ['hardware','Monitor', JSON.stringify(['monitor','layar','display','screen']), JSON.stringify(['Perangkat output untuk menampilkan gambar','Ukurannya diukur dalam inci','Ada jenis LCD dan LED']), '/images/monitor.jpg'],
+  ['network','Router', JSON.stringify(['router','ruter']), JSON.stringify(['Mengarahkan lalu lintas data antar jaringan','Perangkat rumahan biasanya punya antena','Menghubungkan perangkat ke internet']), '/images/router.jpg'],
+  ['network','Switch', JSON.stringify(['switch','network switch','swit']), JSON.stringify(['Menghubungkan banyak perangkat dalam satu jaringan lokal','Memiliki banyak port ethernet','Berbeda dengan hub, lebih cerdas']), '/images/switch.jpg'],
+  ['network','Kabel UTP', JSON.stringify(['utp','kabel utp','unshielded twisted pair','kabel lan','lan cable']), JSON.stringify(['Kabel jaringan yang sering dipakai di kantor','Ujungnya menggunakan konektor RJ-45','Tersedia dalam beberapa kategori seperti Cat5 dan Cat6']), '/images/kabel-utp.jpg'],
+  ['network','Firewall', JSON.stringify(['firewall','fire wall','tembok api']), JSON.stringify(['Sistem keamanan jaringan','Memfilter lalu lintas data masuk dan keluar','Bisa berupa perangkat keras atau lunak']), '/images/firewall.jpg'],
+  ['programming','Python', JSON.stringify(['python','paiton']), JSON.stringify(['Bahasa pemrograman tingkat tinggi','Banyak dipakai untuk AI dan data science','Namanya terinspirasi dari acara komedi Inggris']), '/images/python.jpg'],
+  ['programming','JavaScript', JSON.stringify(['javascript','js','java script']), JSON.stringify(['Bahasa pemrograman utama untuk web browser','Bisa berjalan di frontend maupun backend','Sering disingkat dua huruf saja']), '/images/javascript.jpg'],
+  ['programming','Database', JSON.stringify(['database','basis data','db','data base']), JSON.stringify(['Sistem untuk menyimpan dan mengelola data','Diakses menggunakan bahasa query','Contohnya MySQL dan PostgreSQL']), '/images/database.jpg']
+];
   rows.forEach(r => insertQ.run(...r));
 }
 
