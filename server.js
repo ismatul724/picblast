@@ -357,6 +357,15 @@ io.on('connection', socket => {
     if (player) player.connected = false;
     emitRoomState(room);
   });
+
+  socket.on('game:end:host', ({ code }) => {
+  const room = rooms.get((code || '').toUpperCase());
+  if (!room || room.hostSocketId !== socket.id) return;
+
+  // Paksa akhiri game sekarang
+  finishGame(room.code);
+  });
+
 });
 
 server.listen(PORT, () => {

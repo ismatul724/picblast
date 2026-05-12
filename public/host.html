@@ -15,7 +15,13 @@
   <div class="wrap">
     <div class="top"><div class="brand">PicBlast Host Console</div><div class="chip" id="room-chip">Belum ada room</div></div>
     <div class="grid">
-      <section class="panel"><div id="create-panel"><h1 style="font-size:28px;line-height:1.05">Buat room game</h1><p class="muted" style="margin-top:8px">Host membuat room, memilih tema, lalu pemain lain join dari perangkat masing-masing melalui kode room.</p><input id="host-name" placeholder="Nama host" maxlength="18" /><div class="stack" style="margin-top:14px"><button class="primary" id="create-btn">Buat Room</button></div><div class="status" id="create-status" style="margin-top:12px"></div></div><div id="control-panel" class="hidden"><h2 style="font-size:20px">Atur tema dan mulai game</h2><p class="muted" style="margin-top:6px">Pilih tema yang akan dimainkan. Minimal satu tema aktif.</p><div class="stack" id="theme-list" style="margin-top:14px"></div><div class="stack" style="margin-top:14px"><button class="accent" id="start-btn">Mulai Game</button></div><div class="hint">Cara pakai:<br>1. Buat room.<br>2. Bagikan kode room ke pemain.<br>3. Pemain buka <strong>/player.html</strong> lalu join.<br>4. Tekan mulai game.</div><div class="status" id="host-status" style="margin-top:12px"></div></div></section>
+      <section class="panel"><div id="create-panel"><h1 style="font-size:28px;line-height:1.05">Buat room game</h1><p class="muted" style="margin-top:8px">Host membuat room, memilih tema, lalu pemain lain join dari perangkat masing-masing melalui kode room.</p><input id="host-name" placeholder="Nama host" maxlength="18" /><div class="stack" style="margin-top:14px"><button class="primary" id="create-btn">Buat Room</button></div><div class="status" id="create-status" style="margin-top:12px"></div></div><div id="control-panel" class="hidden"><h2 style="font-size:20px">Atur tema dan mulai game</h2><p class="muted" style="margin-top:6px">Pilih tema yang akan dimainkan. Minimal satu tema aktif.</p><div class="stack" id="theme-list" style="margin-top:14px"></div>
+        <div class="stack" style="margin-top:14px">
+        <button class="accent" id="start-btn">Mulai Game</button>
+        <button class="primary" id="end-btn">Akhiri Game</button>
+      </div>
+
+<div class="hint">Cara pakai:<br>1. Buat room.<br>2. Bagikan kode room ke pemain.<br>3. Pemain buka <strong>/player.html</strong> lalu join.<br>4. Tekan mulai game.</div><div class="status" id="host-status" style="margin-top:12px"></div></div></section>
       <section class="panel"><h2 style="font-size:22px">Room lobby</h2><p class="muted" style="margin-top:6px">Bagikan kode room ke pemain. Minimal 2 pemain untuk pengalaman terbaik.</p><div class="players" id="players-list" style="margin-top:16px"></div></section>
     </div>
   </div>
@@ -37,7 +43,17 @@ socket.on('game:end', ({ leaderboard }) => {
   renderPlayers(leaderboard);
 });
 socket.on('error:message',({message})=>{document.getElementById('create-status').textContent=message;document.getElementById('host-status').textContent=message});
-document.getElementById('create-btn').onclick=()=>socket.emit('room:create',{hostName:document.getElementById('host-name').value});document.getElementById('start-btn').onclick=()=>socket.emit('game:start',{code:roomCode});
+document.getElementById('create-btn').onclick = () =>
+  socket.emit('room:create', { hostName: document.getElementById('host-name').value });
+
+document.getElementById('start-btn').onclick = () =>
+  socket.emit('game:start', { code: roomCode });
+
+document.getElementById('end-btn').onclick = () => {
+  if (!roomCode) return;
+  if (!confirm('Yakin ingin mengakhiri game untuk semua pemain?')) return;
+  socket.emit('game:end:host', { code: roomCode });
+};
 </script>
 </body>
 </html>
