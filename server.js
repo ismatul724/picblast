@@ -74,7 +74,8 @@ function publicPlayer(player) {
     roundScore: player.roundScore,
     avgAnswerMs: player.answersMs.length ? Math.round(player.answersMs.reduce((a, b) => a + b, 0) / player.answersMs.length) : null,
     freezeCharges: player.freezeCharges || 0,
-    connected: player.connected
+    connected: player.connected,
+    isHost: player.isHost
   };
 }
 

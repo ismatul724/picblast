@@ -129,10 +129,12 @@ socket.on('room:joined',({code,player})=>{
 });
 
 socket.on('room:state',({players})=>{
-  lastPlayers=players;
-  const me=players.find(p=>p.id===myId);
-  if(me)myFreezeCharges=me.freezeCharges||0;
-  $('lobby-players').innerHTML=players.map(p=>`<div class="player-row"><span>${p.avatar||'◉'} ${p.name}</span><span class="chip">${p.connected?'online':'offline'}</span></div>`).join('');
+  lastPlayers = players.filter(p => !p.isHost);
+  const me = lastPlayers.find(p => p.id === myId);
+  if(me) myFreezeCharges = me.freezeCharges || 0;
+  $('lobby-players').innerHTML = lastPlayers.map(p =>
+    `<div class="player-row"><span>${p.avatar||'◉'} ${p.name}</span><span class="chip">${p.connected?'online':'offline'}</span></div>`
+  ).join('');
 });
 
 socket.on('error:message',({message})=>{$('join-status').textContent=message});
@@ -217,8 +219,9 @@ socket.on('game:end',({leaderboard})=>{
   const colors=['rgba(192,192,192,.15)','rgba(255,215,0,.2)','rgba(205,127,50,.15)'];
   const borderColors=['rgba(192,192,192,.4)','rgba(255,215,0,.6)','rgba(205,127,50,.4)'];
 
-  const top3=leaderboard.slice(0,3);
-  const rest=leaderboard.slice(3);
+  const finalBoard = leaderboard.filter(p => !p.isHost);
+  const top3 = finalBoard.slice(0,3);
+  const rest = finalBoard.slice(3);
 
   // Urutan podium: 2nd kiri, 1st tengah, 3rd kanan
   const podiumMap=top3.length===1?[0]:top3.length===2?[1,0]:[1,0,2];
@@ -265,7 +268,7 @@ socket.on('answer:feedback',({ok,message})=>{
 
 function renderFreezeArea(frozenId){
   if(myFreezeCharges<1){$('freeze-area').innerHTML='';return}
-  const targets=lastPlayers.filter(p=>p.id!==myId);
+  const targets = lastPlayers.filter(p => p.id !== myId && !p.isHost);
   $('freeze-area').innerHTML=`<div style="margin-top:10px;font-size:13px;color:var(--muted)">❄️ Freeze tersedia (${myFreezeCharges}x) — pilih target:</div>`+targets.map(p=>`<button class="freeze-btn" onclick="useFreeze('${p.id}')">Bekukan ${p.name}</button>`).join('');
 }
 
@@ -276,10 +279,11 @@ function useFreeze(targetId){
 }
 
 function renderLeaderboard(lb){
-  lastPlayers=lb;
-  const me=lb.find(p=>p.id===myId);
-  if(me)myFreezeCharges=me.freezeCharges||0;
-  $('leaderboard').innerHTML=lb.map((p,i)=>`<div class="lb-row" style="${p.id===myId?'border-color:rgba(103,232,249,.4);background:rgba(103,232,249,.06)':''}"><span>${['🥇','🥈','🥉'][i]||'#'+(i+1)} ${p.name}${p.id===myId?' (kamu)':''}</span><span style="font-weight:800">${p.score}</span></div>`).join('');
+  const visible = lb.filter(p => !p.isHost);
+  lastPlayers = visible;
+  const me = visible.find(p => p.id === myId);
+  if(me) myFreezeCharges = me.freezeCharges || 0;
+  $('leaderboard').innerHTML = visible.map((p,i)=>`<div class="lb-row" style="${p.id===myId?'border-color:rgba(103,232,249,.4);background:rgba(103,232,249,.06)':''}"><span>${['🥇','🥈','🥉'][i]||'#'+(i+1)} ${p.name}${p.id===myId?' (kamu)':''}</span><span style="font-weight:800">${p.score}</span></div>`).join('');
 }
 </script>
 </body>
